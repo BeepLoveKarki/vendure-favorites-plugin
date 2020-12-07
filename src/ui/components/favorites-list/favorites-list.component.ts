@@ -21,6 +21,7 @@ export class FavoritesListComponent implements CustomFieldControl, OnInit, OnDes
     customFieldConfig!: CustomFieldConfigType;
     formControl!: FormControl;
 	readonly: boolean;
+	config: CustomFieldControl;
     
     showList = false
     customerId$!: Observable<string | null>;
