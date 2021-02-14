@@ -12,8 +12,7 @@
   "private": false,
   "scripts": {
     "watch": "tsc --watch",
-    "build": "rimraf lib && tsc",
-    "generate-types": "graphql-codegen --config ./codegen.json"
+    "build": "rimraf lib && tsc"
   },
   "resolutions": {
     "tslib": "1.11.2",

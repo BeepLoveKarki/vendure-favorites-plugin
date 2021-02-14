@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Query, Mutation, Resolver } from '@nestjs/graphql';
 import { InjectConnection } from '@nestjs/typeorm';
 import {
     Allow,
@@ -42,9 +42,9 @@ export class FavoriteShopResolver {
     @Ctx() ctx: RequestContext,
     @Args() args: any,
   ) {
-    const favoriteRepo = this.connection.getRepository(ctx,Favorite)
-    const customerId = await (await this.getCustomerForOwner(ctx)).id
-    const { productId } = args
+    const favoriteRepo = this.connection.getRepository(ctx,Favorite);
+    const customerId = await (await this.getCustomerForOwner(ctx)).id;
+    const { productId } = args;
 
     const favorite = await favoriteRepo.findOne({
       where: { 
@@ -52,27 +52,30 @@ export class FavoriteShopResolver {
         customer: { id: customerId } 
       },
       relations: ['customer', 'product'],
-    })
+    });
 
+    let state:string;
     if (favorite) {
-      await favoriteRepo.remove(favorite)
+      await favoriteRepo.remove(favorite);
+	  state = "removed";
     } else {
       await favoriteRepo.insert({ 
         customer: { id: customerId }, 
         product: { id: productId }
-      })
+      });
+	  state = "added";
     }
     
     if (this.options.trackHistory) {
 
-      let productName = favorite?.product.name
+      let productName = favorite?.product.name;
 
       if (!productName) {
-        const res = await this.productService.findOne(ctx, productId)
-        productName = res?.name
+        const res = await this.productService.findOne(ctx, productId);
+        productName = res?.name;
       }
 
-      const note = favorite ? `removed ${productName} from` : `added ${productName} to`
+      const note = favorite ? `removed ${productName} from` : `added ${productName} to`;
       this.historyService.createHistoryEntryForCustomer({
           ctx,
           customerId,
@@ -83,18 +86,35 @@ export class FavoriteShopResolver {
         },
         false
       )
-    }
-
-    return this.listQueryBuilder
-      .build(Favorite, args.options || undefined, {
-          relations: ['product'],
-          where: { customer: { id: customerId } }
-      })
-      .getManyAndCount()
-      .then(([items, totalItems]) => ({
-          items,
-          totalItems,
-      }));
+    };
+	  
+	  return state;
+  }
+  
+  @Query()
+  @Allow(Permission.Owner)
+  async isFavorite(
+    @Ctx() ctx: RequestContext,
+    @Args() args: any,
+  ) {
+     
+	 const favoriteRepo = this.connection.getRepository(ctx,Favorite);
+	 const { productId } = args;
+	 const customerId = await (await this.getCustomerForOwner(ctx)).id;
+	 const favorite = await favoriteRepo.findOne({
+      where: { 
+        product: { id: productId }, 
+        customer: { id: customerId } 
+      },
+      relations: ['customer', 'product'],
+    });
+	
+	if (favorite){
+	  return true;
+	}else{
+	  return false;
+	}
+  
   }
 
   /**

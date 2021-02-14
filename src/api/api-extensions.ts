@@ -32,8 +32,12 @@ export const adminApiExtensions = gql`
 
 export const shopApiExtensions = gql`
   ${commonApiExtensions}
+  
+  extend type Query{
+    isFavorite(productId: ID!): Boolean!
+  }
 
   extend type Mutation {
-    toggleFavorite(productId: ID!): FavoriteList!
+    toggleFavorite(productId: ID!): String!
   }
 `;
